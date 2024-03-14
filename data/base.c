@@ -1,6 +1,6 @@
+#include <windows.h>
+#include <ntsecapi.h>
 #include "<BASENAME>.h"
-#include <time.h>
-#include <stdint.h>
 
 // Code below is adapted from @modexpblog. Read linked article for more details.
 // https://www.mdsec.co.uk/2020/12/bypassing-user-mode-hooks-and-direct-invocation-of-system-calls-for-red-teams
@@ -9,9 +9,9 @@ SW2_SYSCALL_LIST SW2_SyscallList = { 0, 1 };
 
 #ifdef RANDSYSCALL
 #ifndef _WIN64
-uint32_t ntdllBase = 0;
+int ntdllBase = 0;
 #else
-uint64_t ntdllBase = 0;
+INT64 ntdllBase = 0;
 #endif
 #endif
 
@@ -60,17 +60,22 @@ BOOL SW2_PopulateSyscallList(void)
         // If this is NTDLL.dll, exit loop.
         PCHAR DllName = SW2_RVA2VA(PCHAR, DllBase, ExportDirectory->Name);
 
+        // ld.lldtn
+#ifdef _WIN64
+        if ((*(DWORD64*)DllName | 0x2020202020202020) == 0x6c642e6c6c64746e) break;
+#else
         if ((*(ULONG*)DllName | 0x20202020) != 'ldtn') continue;
         if ((*(ULONG*)(DllName + 4) | 0x20202020) == 'ld.l') break;
+#endif
     }
 
     if (!ExportDirectory) return FALSE;
     
 #ifdef RANDSYSCALL
 #ifdef _WIN64
-    ntdllBase = (uint64_t)DllBase;
+    ntdllBase = (UINT64)DllBase;
 #else
-    ntdllBase = (uint64_t)DllBase;
+    ntdllBase = (UINT64)DllBase;
 #endif
 #endif
 
@@ -143,7 +148,7 @@ EXTERN_C DWORD SW2_GetSyscallNumber(DWORD FunctionHash)
 
 #ifdef RANDSYSCALL
 #ifdef _WIN64
-EXTERN_C uint64_t SW2_GetRandomSyscallAddress(void)
+EXTERN_C UINT64 SW2_GetRandomSyscallAddress(void)
 #else
 EXTERN_C DWORD SW2_GetRandomSyscallAddress(int callType)
 #endif
@@ -167,10 +172,11 @@ EXTERN_C DWORD SW2_GetRandomSyscallAddress(int callType)
     instructOffset = 0x12;
     instructValue = 0x0F;
 #endif
-    srand(time(0));
     do
     {
-        int randNum = (rand() % (SW2_SyscallList.Count + 1));
+        int randNum;
+        RtlGenRandom(&randNum, sizeof(int));
+        randNum = (randNum % (SW2_SyscallList.Count + 1));
         if (*(unsigned char*)(ntdllBase + SW2_SyscallList.Entries[randNum].Address + instructOffset) == instructValue)
             return (ntdllBase + SW2_SyscallList.Entries[randNum].Address + instructOffset);
     } while(1);

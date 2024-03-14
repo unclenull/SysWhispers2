@@ -680,6 +680,9 @@ Nt{function_name}: \\n\\
                 base_header_contents = base_header_contents.replace('<SEED_VALUE>', f'0x{self.seed:08X}', 1)
                 base_header_contents = base_header_contents.replace('\r','')
 
+                if not args.std:
+                    output_header.write('#define RANDSYSCALL\n'.encode())
+
                 # Write the base header.
                 output_header.write(base_header_contents.encode())
 
@@ -703,59 +706,59 @@ Nt{function_name}: \\n\\
                 self._gen_asm_file(arch, lang, basename, function_names)
         
     def _gen_asm_file(self, arch, lang, basename, function_names):
-        for callType in ['std', 'rnd']:
-            # Set the file extension
+        callType = 'std' if args.std else 'rnd'
+        # Set the file extension
+        if lang == 'masm':
+            file_ext = 'asm'
+        elif lang == 'nasm':
+            file_ext = 'nasm'
+        elif lang == 'gas':
+            file_ext = 's'
+        elif lang == 'inlinegas':
+            file_ext = 'h'
+            
+        # Write ASM file.
+        if lang == 'inlinegas':
+            basename_suffix = 'inline'
+        else:
+            basename_suffix = 'stubs'
+        basename_suffix = basename_suffix.capitalize() if os.path.basename(basename).istitle() else basename_suffix
+        basename_suffix = f'_{basename_suffix}' if '_' in basename else f'.{basename_suffix}' 
+        with open(f'{basename}{basename_suffix}.{callType}.{arch}.{file_ext}', 'wb') as output_asm:
+            # Add the stub
             if lang == 'masm':
-                file_ext = 'asm'
-            elif lang == 'nasm':
-                file_ext = 'nasm'
-            elif lang == 'gas':
-                file_ext = 's'
+                output_asm.write(self.asm_code[arch][lang][callType])
             elif lang == 'inlinegas':
-                file_ext = 'h'
-                
-            # Write ASM file.
-            if lang == 'inlinegas':
-                basename_suffix = 'inline'
+                with open(f'{basename}.h', 'rb') as tempFile:
+                    output_asm.write(tempFile.read())
+                    output_asm.write(b'\n\n')
+                with open(f'{basename}.c', 'rb') as tempFile:
+                    cBase = tempFile.read()
+                    cBase = cBase.decode().replace(f'#include "{basename}.h"','').encode()
+                    output_asm.write(cBase)
+                    output_asm.write(b'\n\n')
+                output_asm.write(self.asm_code[arch][lang][callType])
             else:
-                basename_suffix = 'stubs'
-            basename_suffix = basename_suffix.capitalize() if os.path.basename(basename).istitle() else basename_suffix
-            basename_suffix = f'_{basename_suffix}' if '_' in basename else basename_suffix
-            with open(f'{basename}{basename_suffix}.{callType}.{arch}.{file_ext}', 'wb') as output_asm:
-                # Add the stub
-                if lang == 'masm':
-                    output_asm.write(self.asm_code[arch][lang][callType])
-                elif lang == 'inlinegas':
-                    with open(f'{basename}.h', 'rb') as tempFile:
-                        output_asm.write(tempFile.read())
-                        output_asm.write(b'\n\n')
-                    with open(f'{basename}.c', 'rb') as tempFile:
-                        cBase = tempFile.read()
-                        cBase = cBase.decode().replace(f'#include "{basename}.h"','').encode()
-                        output_asm.write(cBase)
-                        output_asm.write(b'\n\n')
-                    output_asm.write(self.asm_code[arch][lang][callType])
-                else:
-                    globalFunctions = ''
-                    for function_name in function_names:
-                        if lang == 'nasm':
-                            if arch == 'x64':
-                                globalFunctions = globalFunctions + 'global {function_name}\n'.format(function_name = function_name)
-                            else:
-                                globalFunctions = globalFunctions + 'global _{function_name}\n'.format(function_name = function_name)
-                        else:
-                            if arch == 'x64':
-                                globalFunctions = globalFunctions + '.global {function_name}\n'.format(function_name = function_name)
-                            else:
-                                globalFunctions = globalFunctions + '.global _{function_name}\n'.format(function_name = function_name)
-                    output_asm.write(self.asm_code[arch][lang][callType].decode().format(globalFunctions = globalFunctions).encode())
-                    
+                globalFunctions = ''
                 for function_name in function_names:
-                    output_asm.write((self._get_function_asm_code(arch, lang, function_name) + '\n').encode())
-                if lang == 'masm':
-                    output_asm.write(b'end')
-                    
-            print(f'\t{basename}{basename_suffix}.{callType}.{arch}.{file_ext}')
+                    if lang == 'nasm':
+                        if arch == 'x64':
+                            globalFunctions = globalFunctions + 'global {function_name}\n'.format(function_name = function_name)
+                        else:
+                            globalFunctions = globalFunctions + 'global _{function_name}\n'.format(function_name = function_name)
+                    else:
+                        if arch == 'x64':
+                            globalFunctions = globalFunctions + '.global {function_name}\n'.format(function_name = function_name)
+                        else:
+                            globalFunctions = globalFunctions + '.global _{function_name}\n'.format(function_name = function_name)
+                output_asm.write(self.asm_code[arch][lang][callType].decode().format(globalFunctions = globalFunctions).encode())
+                
+            for function_name in function_names:
+                output_asm.write((self._get_function_asm_code(arch, lang, function_name) + '\n').encode())
+            if lang == 'masm':
+                output_asm.write(b'end')
+                
+        print(f'\t{basename}{basename_suffix}.{callType}.{arch}.{file_ext}')
         
     def _get_typedefs(self, function_names: list) -> list:
         def _names_to_ids(names: list) -> list:
@@ -906,6 +909,7 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--out-file', help='Output basename (w/o extension)', required=True)
     parser.add_argument('-a', '--arch', help='CPU architecture ("all", "x86", "x64")', required=False)
     parser.add_argument('-l', '--asm-lang', help='Assembler output format ("all", "masm", "nasm", "gas", "inlinegas")', required=False)
+    parser.add_argument('-s', '--std', help='Do not use random syscall', action='store_true')
     parser.add_argument('--function-prefix', default='Nt', help='Function prefix', required=False)
     args = parser.parse_args()
 
