@@ -470,6 +470,11 @@
     "definition": "typedef enum _KEY_INFORMATION_CLASS\n{\n\tKeyBasicInformation = 0,\n\tKeyNodeInformation = 1,\n\tKeyFullInformation = 2,\n\tKeyNameInformation = 3,\n\tKeyCachedInformation = 4,\n\tKeyFlagsInformation = 5,\n\tKeyVirtualizationInformation = 6,\n\tKeyHandleTagsInformation = 7,\n\tMaxKeyInfoClass = 8\n} KEY_INFORMATION_CLASS, *PKEY_INFORMATION_CLASS;"
   },
   {
+    "identifiers": ["UNICODE_STRING", "PUNICODE_STRING"],
+    "dependencies": [],
+    "definition": "typedef struct _UNICODE_STRING\n{\n\tUSHORT Length;\n\tUSHORT MaximumLength;\n\tPWSTR  Buffer;\n} UNICODE_STRING, *PUNICODE_STRING;"
+  },
+  {
     "identifiers": ["InitializeObjectAttributes"],
     "dependencies": [],
     "definition": "#ifndef InitializeObjectAttributes\n#define InitializeObjectAttributes( p, n, a, r, s ) { \\\n\t(p)->Length = sizeof( OBJECT_ATTRIBUTES );        \\\n\t(p)->RootDirectory = r;                           \\\n\t(p)->Attributes = a;                              \\\n\t(p)->ObjectName = n;                              \\\n\t(p)->SecurityDescriptor = s;                      \\\n\t(p)->SecurityQualityOfService = NULL;             \\\n}\n#endif"
