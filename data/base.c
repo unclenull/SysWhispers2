@@ -1,6 +1,8 @@
 #include <windows.h>
-#include <ntsecapi.h>
 #include "<BASENAME>.h"
+
+#define RtlGenRandom SystemFunction036
+BYTE RtlGenRandom(PVOID RandomBuffer, ULONG RandomBufferLength);
 
 // Code below is adapted from @modexpblog. Read linked article for more details.
 // https://www.mdsec.co.uk/2020/12/bypassing-user-mode-hooks-and-direct-invocation-of-system-calls-for-red-teams
