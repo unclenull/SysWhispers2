@@ -1,9 +1,6 @@
 #include <windows.h>
 #include "<BASENAME>.h"
 
-#define RtlGenRandom SystemFunction036
-BYTE RtlGenRandom(PVOID RandomBuffer, ULONG RandomBufferLength);
-
 // Code below is adapted from @modexpblog. Read linked article for more details.
 // https://www.mdsec.co.uk/2020/12/bypassing-user-mode-hooks-and-direct-invocation-of-system-calls-for-red-teams
 
@@ -176,8 +173,7 @@ EXTERN_C DWORD SW2_GetRandomSyscallAddress(int callType)
 #endif
     do
     {
-        int randNum;
-        RtlGenRandom(&randNum, sizeof(int));
+        int randNum = GetTickCount();
         randNum = (randNum % (SW2_SyscallList.Count + 1));
         if (*(unsigned char*)(ntdllBase + SW2_SyscallList.Entries[randNum].Address + instructOffset) == instructValue)
             return (ntdllBase + SW2_SyscallList.Entries[randNum].Address + instructOffset);
