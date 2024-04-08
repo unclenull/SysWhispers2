@@ -771,6 +771,11 @@ Nt{function_name}: \\n\\
                 if list(filter(lambda t: param['type'] in t['identifiers'], self.typedefs)):
                     if param['type'] not in used_typedefs:
                         used_typedefs.append(param['type'])
+            if 'extra' in self.prototypes[function_name]:
+                for dep in self.prototypes[function_name]['extra']:
+                    if list(filter(lambda t: dep in t['identifiers'], self.typedefs)):
+                        if dep not in used_typedefs:
+                            used_typedefs.append(dep)
 
         # Resolve typedef dependencies.
         i = 0

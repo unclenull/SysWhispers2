@@ -30,9 +30,14 @@
     "definition": "typedef struct _SYSTEM_HANDLE_INFORMATION\n{\n\tULONG HandleCount;\n\tSYSTEM_HANDLE Handles[1];\n} SYSTEM_HANDLE_INFORMATION, *PSYSTEM_HANDLE_INFORMATION;"
   },
   {
+    "identifiers": ["SYSTEM_PROCESSOR_INFORMATION", "PSYSTEM_PROCESSOR_INFORMATION"],
+    "dependencies": [],
+    "definition": "typedef struct _SYSTEM_PROCESSOR_INFORMATION {\n    USHORT ProcessorArchitecture;\n    USHORT ProcessorLevel;\n    USHORT ProcessorRevision;\n    USHORT MaximumProcessors;\n    ULONG ProcessorFeatureBits;\n} SYSTEM_PROCESSOR_INFORMATION, *PSYSTEM_PROCESSOR_INFORMATION;"
+  },
+  {
     "identifiers": ["SYSTEM_INFORMATION_CLASS", "PSYSTEM_INFORMATION_CLASS"],
-    "dependencies": ["SYSTEM_HANDLE_INFORMATION"],
-    "definition": "typedef enum _SYSTEM_INFORMATION_CLASS\n{\n\tSystemBasicInformation = 0,\n\tSystemPerformanceInformation = 2,\n\tSystemTimeOfDayInformation = 3,\n\tSystemProcessInformation = 5,\n\tSystemProcessorPerformanceInformation = 8,\n\tSystemHandleInformation = 16,\n\tSystemInterruptInformation = 23,\n\tSystemExceptionInformation = 33,\n\tSystemRegistryQuotaInformation = 37,\n\tSystemLookasideInformation = 45,\n\tSystemCodeIntegrityInformation = 103,\n\tSystemPolicyInformation = 134,\n} SYSTEM_INFORMATION_CLASS, *PSYSTEM_INFORMATION_CLASS;"
+    "dependencies": ["SYSTEM_HANDLE_INFORMATION", "SYSTEM_PROCESSOR_INFORMATION"],
+    "definition": "typedef enum _SYSTEM_INFORMATION_CLASS\n{\n\tSystemBasicInformation = 0,\n\tSystemProcessorInformation = 1,\n\tSystemPerformanceInformation = 2,\n\tSystemTimeOfDayInformation = 3,\n\tSystemProcessInformation = 5,\n\tSystemProcessorPerformanceInformation = 8,\n\tSystemHandleInformation = 16,\n\tSystemInterruptInformation = 23,\n\tSystemExceptionInformation = 33,\n\tSystemRegistryQuotaInformation = 37,\n\tSystemLookasideInformation = 45,\n\tSystemCodeIntegrityInformation = 103,\n\tSystemPolicyInformation = 134,\n} SYSTEM_INFORMATION_CLASS, *PSYSTEM_INFORMATION_CLASS;"
   },
   {
     "identifiers": ["PROCESSINFOCLASS", "PPROCESSINFOCLASS"],
@@ -251,8 +256,13 @@
   },
   {
     "identifiers": ["KEY_VALUE_INFORMATION_CLASS"],
-    "dependencies": [],
+    "dependencies": ["KEY_VALUE_PARTIAL_INFORMATION"],
     "definition": "typedef enum _KEY_VALUE_INFORMATION_CLASS {\n\tKeyValueBasicInformation = 0,\n\tKeyValueFullInformation,\n\tKeyValuePartialInformation,\n\tKeyValueFullInformationAlign64,\n\tKeyValuePartialInformationAlign64,\n\tMaxKeyValueInfoClass\n} KEY_VALUE_INFORMATION_CLASS;"
+  },
+  {
+    "identifiers": ["KEY_VALUE_PARTIAL_INFORMATION"],
+    "dependencies": [],
+    "definition": "typedef struct _KEY_VALUE_PARTIAL_INFORMATION {\n  ULONG TitleIndex;\n  ULONG Type;\n  ULONG DataLength;\n  UCHAR Data[1];\n} KEY_VALUE_PARTIAL_INFORMATION, *PKEY_VALUE_PARTIAL_INFORMATION;"
   },
   {
     "identifiers": ["PLANGID"],
@@ -482,7 +492,22 @@
   {
     "identifiers": ["OBJECT_ATTRIBUTES", "POBJECT_ATTRIBUTES"],
     "dependencies": ["PUNICODE_STRING", "InitializeObjectAttributes"],
-    "definition": "typedef struct _OBJECT_ATTRIBUTES\n{\n\tULONG           Length;\n\tHANDLE          RootDirectory;\n\tPUNICODE_STRING ObjectName;\n\tULONG           Attributes;\n\tPVOID           SecurityDescriptor;\n\tPVOID           SecurityQualityOfService;\n} OBJECT_ATTRIBUTES, *POBJECT_ATTRIBUTES;"
+    "definition": "#define OBJ_INHERIT                         0x00000002L\n#define OBJ_PERMANENT                       0x00000010L\n#define OBJ_EXCLUSIVE                       0x00000020L\n#define OBJ_CASE_INSENSITIVE                0x00000040L\n#define OBJ_OPENIF                          0x00000080L\n#define OBJ_OPENLINK                        0x00000100L\n#define OBJ_KERNEL_HANDLE                   0x00000200L\n#define OBJ_FORCE_ACCESS_CHECK              0x00000400L\n#define OBJ_IGNORE_IMPERSONATED_DEVICEMAP   0x00000800L\n#define OBJ_DONT_REPARSE                    0x00001000L\n#define OBJ_VALID_ATTRIBUTES                0x00001FF2L\ntypedef struct _OBJECT_ATTRIBUTES\n{\n\tULONG           Length;\n\tHANDLE          RootDirectory;\n\tPUNICODE_STRING ObjectName;\n\tULONG           Attributes;\n\tPVOID           SecurityDescriptor;\n\tPVOID           SecurityQualityOfService;\n} OBJECT_ATTRIBUTES, *POBJECT_ATTRIBUTES;"
+  },
+  {
+    "identifiers": ["FileCreateDisposition"],
+    "dependencies": [],
+    "definition": "#define FILE_SUPERSEDE                  0x00000000\n#define FILE_OPEN                       0x00000001\n#define FILE_CREATE                     0x00000002\n#define FILE_OPEN_IF                    0x00000003\n#define FILE_OVERWRITE                  0x00000004\n#define FILE_OVERWRITE_IF               0x00000005\n#define FILE_MAXIMUM_DISPOSITION        0x00000005"
+  },
+  {
+    "identifiers": ["FileStatus"],
+    "dependencies": [],
+    "definition": "#define FILE_SUPERSEDED                 0x00000000\n#define FILE_OPENED                     0x00000001\n#define FILE_CREATED                    0x00000002\n#define FILE_OVERWRITTEN                0x00000003\n#define FILE_EXISTS                     0x00000004\n#define FILE_DOES_NOT_EXIST             0x00000005"
+  },
+  {
+    "identifiers": ["FileOptions"],
+    "dependencies": [],
+    "definition": "#define FILE_DIRECTORY_FILE                     0x00000001\n#define FILE_WRITE_THROUGH                      0x00000004\n#define FILE_SEQUENTIAL_ONLY                    0x00000004\n#define FILE_NO_INTERMEDIATE_BUFFERING          0x00000008\n\n#define FILE_SYNCHRONOUS_IO_ALERT               0x00000010\n#define FILE_SYNCHRONOUS_IO_NONALERT            0x00000020\n#define FILE_NON_DIRECTORY_FILE                 0x00000040\n#define FILE_CREATE_TREE_CONNECTION             0x00000080\n\n#define FILE_COMPLETE_IF_OPLOCKED               0x00000100\n#define FILE_NO_EA_KNOWLEDGE                    0x00000200\n#define FILE_OPEN_REMOTE_INSTANCE               0x00000400\n#define FILE_RANDOM_ACCESS                      0x00000800\n\n#define FILE_DELETE_ON_CLOSE                    0x00001000\n#define FILE_OPEN_BY_FILE_ID                    0x00002000\n#define FILE_OPEN_FOR_BACKUP_INTENT             0x00004000\n#define FILE_NO_COMPRESSION                     0x00008000\n\n#if (_WIN32_WINNT >= _WIN32_WINNT_WIN7)\n#define FILE_OPEN_REQUIRING_OPLOCK              0x00010000\n#endif\n\n#define FILE_RESERVE_OPFILTER                   0x00100000\n#define FILE_OPEN_REPARSE_POINT                 0x00200000\n#define FILE_OPEN_NO_RECALL                     0x00400000\n#define FILE_OPEN_FOR_FREE_SPACE_QUERY          0x00800000\n\n#define FILE_VALID_OPTION_FLAGS                 0x00ffffff\n#define FILE_VALID_PIPE_OPTION_FLAGS            0x00000032\n#define FILE_VALID_MAILSLOT_OPTION_FLAGS        0x00000032\n#define FILE_VALID_SET_FLAGS                    0x00000036"
   },
   {
     "identifiers": ["TIMER_INFORMATION_CLASS", "PTIMER_INFORMATION_CLASS"],

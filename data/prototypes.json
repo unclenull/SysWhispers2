@@ -2004,7 +2004,8 @@
         "out": false,
         "optional": false
       }
-    ]
+    ],
+    "extra": ["FileOptions", "FileStatus"]
   },
   "NtDelayExecution": {
     "type": "NTSTATUS",
@@ -3292,7 +3293,8 @@
         "out": false,
         "optional": false
       }
-    ]
+    ],
+    "extra": ["FileCreateDisposition", "FileOptions", "FileStatus"]
   },
   "NtQueryEvent": {
     "type": "NTSTATUS",
